@@ -8,4 +8,5 @@
 
 class ScrapyPipeline(object):
     def process_item(self, item, spider):
+        print("ScrapyPipeline")
         return item
