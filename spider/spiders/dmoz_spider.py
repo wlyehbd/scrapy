@@ -1,14 +1,30 @@
 import scrapy
+from spider.common.parser import Parser
+from spider.cores.SpiderInit import SpiderInit
 
-class DmozSpider(scrapy.Spider):
-    name = "dmoz"
-    allowed_domains = ["dmoz.org"]
-    start_urls = [
-        "http://www.dmoz.org/Computers/Programming/Languages/Python/Books/",
-        "http://www.dmoz.org/Computers/Programming/Languages/Python/Resources/"
-    ]
-    
+
+class BlackwidowBasicSpider:
+    def __init__(self, *args, **kwargs):
+        self.config = SpiderInit(**kwargs)
+
+        self.rules = kwargs.get("rules")
+        self.type = kwargs.get("type")
+
     def parse(self, response):
-        filename = response.url.split("/")[-2]
-        with open(filename, 'wb') as f:
-            f.write(response.body)
+        item = {}
+        for i, k in self.rules.fields_rules.get("fields_rules").items():
+            res = Parser(
+                response=response,
+                regex=k.get("regex"),
+                type=k.get("select")
+            ).parser()
+            item[i] = res
+        return item
+
+
+class DmozSpider(BlackwidowBasicSpider, scrapy.Spider):
+    def start_requests(self):
+        startUrl = self.config.getStartUrl()
+        for url_info in startUrl:
+            yield self.make_requests_from_url(url_info)
+
